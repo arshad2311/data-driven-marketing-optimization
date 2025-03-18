@@ -1,0 +1,43 @@
+import pandas as pd
+
+def generate_optimization_proposals(data_path='data/marketing_campaign_data.csv'):
+    """Generates data-driven marketing campaign optimization proposals based on analysis."""
+
+    try:
+        campaign_data = pd.read_csv(data_path)
+    except FileNotFoundError:
+        print(f"Error: Data file not found at {data_path}. Please run data generation and analysis scripts first.")
+        return
+
+    # Feature Engineering (recalculate metrics - ensure consistency with analysis script)
+    campaign_data['CTR'] = (campaign_data['Clicks'] / campaign_data['Impressions']) * 100
+    campaign_data['Conversion Rate'] = (campaign_data['Conversions'] / campaign_data['Clicks']) * 100
+    campaign_data['CPA'] = campaign_data['Cost'] / campaign_data['Conversions']
+    channel_performance = campaign_data.groupby('Channel').agg({'Conversions': 'sum', 'Cost': 'sum', 'CTR': 'mean', 'Conversion Rate': 'mean', 'CPA': 'mean'}).reset_index()
+
+    proposals = []
+
+    # 1. Identify Best and Worst Performing Channels based on CPA
+    best_channel_cpa = channel_performance.sort_values('CPA').iloc[0]
+    worst_channel_cpa = channel_performance.sort_values('CPA', ascending=False).iloc[0]
+
+    proposals.append(f"**Recommendation 1 (Channel Focus):**  Invest more in **{best_channel_cpa['Channel']}** channel as it has the lowest CPA (${best_channel_cpa['CPA']:.2f}), indicating it's the most cost-effective for acquiring conversions. Consider reallocating budget from **{worst_channel_cpa['Channel']}**, which has the highest CPA (${worst_channel_cpa['CPA']:.2f}).")
+
+    # 2. Identify Channels with High CTR but Lower Conversion Rate - Potential Landing Page Issues
+    potential_landing_page_issue_channels = channel_performance[(channel_performance['CTR'] > channel_performance['CTR'].mean()) & (channel_performance['Conversion Rate'] < channel_performance['Conversion Rate'].mean())]
+    if not potential_landing_page_issue_channels.empty:
+        channels_list = ', '.join(potential_landing_page_issue_channels['Channel'].tolist())
+        proposals.append(f"**Recommendation 2 (Landing Page Optimization):** Investigate landing page effectiveness for **{channels_list}** channels. These channels have above-average CTRs but below-average Conversion Rates, suggesting users are clicking but not converting.  Optimize landing page content, design, and user experience to improve conversion rates.")
+
+    # 3. Consider Age Group and Location Targeting (Example - could be expanded with deeper analysis)
+    age_location_insights = campaign_data.groupby(['Age Group', 'Location']).agg({'Conversions': 'sum', 'Cost': 'sum', 'CPA': 'mean'}).reset_index()
+    best_age_location = age_location_insights.sort_values('CPA').iloc[0]
+
+    proposals.append(f"**Recommendation 3 (Targeting Refinement):** Explore refining targeting based on Age Group and Location.  For example, the combination of **{best_age_location['Age Group']} in {best_age_location['Location']}** shows a lower CPA (${best_age_location['CPA']:.2f}). Consider increasing bids or focusing ad creatives on these segments in relevant channels.")
+
+    print("\n--- Optimization Proposals ---")
+    for proposal in proposals:
+        print(proposal + "\n")
+
+if __name__ == "__main__":
+    generate_optimization_proposals()

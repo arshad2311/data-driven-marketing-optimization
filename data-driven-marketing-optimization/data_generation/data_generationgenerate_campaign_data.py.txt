@@ -1,0 +1,53 @@
+import pandas as pd
+import numpy as np
+import datetime
+
+def generate_campaign_data(num_entries=1000):
+    """Generates synthetic marketing campaign data for demonstration."""
+    np.random.seed(42) # For reproducibility
+
+    channels = ['Email', 'Social Media', 'Display Ads', 'Search Ads']
+    age_groups = ['18-24', '25-34', '35-44', '45-54', '55+']
+    locations = ['USA', 'Canada', 'UK', 'Germany', 'France', 'Australia']
+
+    data = []
+    start_date = datetime.datetime(2023, 1, 1)
+    for i in range(num_entries):
+        channel = np.random.choice(channels)
+        age_group = np.random.choice(age_groups)
+        location = np.random.choice(locations)
+        date = start_date + datetime.timedelta(days=np.random.randint(0, 90)) # Data over 3 months
+        impressions = np.random.randint(1000, 10000)
+        clicks = int(impressions * np.random.uniform(0.01, 0.05)) # Click-through rate (CTR)
+        conversions = int(clicks * np.random.uniform(0.02, 0.10)) # Conversion rate
+
+        # Simulate campaign cost (simplified - in real world, more complex)
+        cost = 0
+        if channel == 'Email':
+            cost = impressions * 0.001 # Lower cost
+        elif channel == 'Social Media':
+            cost = impressions * 0.005
+        elif channel == 'Display Ads':
+            cost = impressions * 0.008
+        elif channel == 'Search Ads':
+            cost = impressions * 0.015 # Higher cost
+
+        data.append({
+            'Date': date.strftime('%Y-%m-%d'),
+            'Channel': channel,
+            'Age Group': age_group,
+            'Location': location,
+            'Impressions': impressions,
+            'Clicks': clicks,
+            'Conversions': conversions,
+            'Cost': cost
+        })
+
+    df = pd.DataFrame(data)
+    return df
+
+if __name__ == "__main__":
+    campaign_data = generate_campaign_data(num_entries=1000)
+    output_path = 'data/marketing_campaign_data.csv'
+    campaign_data.to_csv(output_path, index=False)
+    print(f"Synthetic marketing campaign data generated and saved to: {output_path}")
